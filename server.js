@@ -1,11 +1,15 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '0.0.0.0';
-const dbPath = path.join(__dirname, 'calculations.db');
+// Use a writable data directory (supports mounting a volume on Fly.io)
+const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+const dbPath = path.join(dataDir, 'calculations.db');
 const SHARED_LOGIN_USERNAME = 'tehnolift';
 const SHARED_LOGIN_PASSWORD = 'tehnolift123';
 const LEGACY_LOGIN_USERNAME = 'demo';

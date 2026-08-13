@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kalkulacija — V1</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="responsive.css">
 </head>
 <body>
   <div id="loginScreen" class="login-screen">
@@ -43,7 +44,10 @@
 
     <main>
       <header>
-        <div><h1 id="pageTitle">Dashboard</h1><p id="pageSub">Pregled kalkulacija i prodajnih cena</p></div>
+        <div class="mobile-left">
+          <button id="menuBtn" class="mobile-menu" aria-label="Open menu">☰</button>
+          <div><h1 id="pageTitle">Dashboard</h1><p id="pageSub">Pregled kalkulacija i prodajnih cena</p></div>
+        </div>
         <div class="header-actions">
           <span class="user-name" id="headerUserName">Korisnik</span>
           <button class="primary" id="newBtn">＋ Nova kalkulacija</button>

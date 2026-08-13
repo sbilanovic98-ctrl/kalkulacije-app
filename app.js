@@ -348,3 +348,23 @@ if (savedUser && $('loginScreen') && $('appShell')) {
   $('appShell').classList.add('hidden');
   resetCalculatorForm();
 }
+
+// Mobile sidebar toggle
+if ($('menuBtn')) {
+  $('menuBtn').addEventListener('click', () => {
+    document.body.classList.toggle('sidebar-open');
+    const side = document.querySelector('.sidebar');
+    if (side) side.style.display = document.body.classList.contains('sidebar-open') ? 'flex' : '';
+  });
+  // Close sidebar when clicking outside on mobile
+  document.addEventListener('click', (e) => {
+    if (!document.body.classList.contains('sidebar-open')) return;
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+    const target = e.target;
+    if (!sidebar.contains(target) && !target.closest('#menuBtn')) {
+      document.body.classList.remove('sidebar-open');
+      sidebar.style.display = '';
+    }
+  });
+}
