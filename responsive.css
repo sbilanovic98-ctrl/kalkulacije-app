@@ -24,6 +24,13 @@
   .brand-logo small{display:none}
   .mobile-menu{display:inline-flex}
 
+  /* Top compact navigation bar */
+  .top-nav{display:flex;gap:8px;justify-content:space-around;margin:10px 0 16px}
+  .top-nav .nav.top{flex:1;padding:8px 6px;border-radius:10px;background:#fff;border:1px solid #e6eef9;display:flex;flex-direction:column;align-items:center;color:#2f6fed;font-weight:700}
+  .top-nav .nav.top span{display:block;margin-top:6px;font-size:12px;font-weight:600}
+  .top-nav .nav.top:hover{background:#eef6ff}
+  .top-nav.hidden{display:none}
+
   /* Mobile table: show rows as compact grid with key/value summary */
   .table-wrap table thead{display:none}
   .table-wrap table{width:100%;border-collapse:collapse}
@@ -39,10 +46,12 @@
 
 /* Small phones */
 @media (max-width:420px){
-  .primary{padding:10px 12px;font-size:14px}
-  h1{font-size:20px}
-  .brand-logo span{font-size:18px}
-  main{padding:10px}
+  /* Reduce overall font to fit screen without zoom */
+  html,body{font-size:13px}
+  .primary{padding:8px 10px;font-size:13px}
+  h1{font-size:18px}
+  .brand-logo span{font-size:16px}
+  main{padding:8px}
 }
 
 /* Hide mobile menu by default on desktop */

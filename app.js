@@ -368,3 +368,14 @@ if ($('menuBtn')) {
     }
   });
 }
+// Show top nav on small screens and wire its buttons to existing nav handlers
+function refreshTopNavVisibility(){
+  const top = document.getElementById('topNav');
+  if (!top) return;
+  if (window.innerWidth <= 768) top.classList.remove('hidden'); else top.classList.add('hidden');
+}
+window.addEventListener('resize', refreshTopNavVisibility);
+refreshTopNavVisibility();
+document.getElementById('topNav')?.addEventListener('click', (e)=>{
+  const b = e.target.closest('button.nav'); if (!b) return; const view = b.dataset.view; if (!view) return; document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('active', n.dataset.view===view)); show(view);
+});
