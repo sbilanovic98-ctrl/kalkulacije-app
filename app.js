@@ -217,10 +217,23 @@ $('saveBtn').onclick=async ()=>{
  }
 };
 function show(view){
- document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));$(view).classList.remove('hidden');
- document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('active',n.dataset.view===view));
- const titles={dashboard:['Dashboard','Pregled kalkulacija i prodajnih cena'],calculator:['Nova kalkulacija','Unos troškova i obračun prodajne cene'],history:['Istorija','Sačuvane kalkulacije']};
- $('pageTitle').textContent=titles[view][0];$('pageSub').textContent=titles[view][1];
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+  $(view).classList.remove('hidden');
+  document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('active',n.dataset.view===view));
+  const titles={dashboard:['Dashboard','Pregled kalkulacija i prodajnih cena'],calculator:['Nova kalkulacija','Unos troškova i obračun prodajne cene'],history:['Istorija','Sačuvane kalkulacije']};
+  $('pageTitle').textContent=titles[view][0];$('pageSub').textContent=titles[view][1];
+
+  // Toggle history hero image: decorative full-screen background.
+  const hero = $('historyHero');
+  if (hero) {
+    if (view === 'history') {
+      // If a user is logged in, the hero image is optional and hidden by default.
+      if (!currentUser) { hero.classList.remove('hidden'); hero.classList.add('visible'); hero.setAttribute('aria-hidden','false'); }
+      else { hero.classList.add('hidden'); hero.classList.remove('visible'); hero.setAttribute('aria-hidden','true'); }
+    } else {
+      hero.classList.add('hidden'); hero.classList.remove('visible'); hero.setAttribute('aria-hidden','true');
+    }
+  }
 }
 document.addEventListener('click', async e => {
  const editBtn = e.target.closest('.edit-btn');
