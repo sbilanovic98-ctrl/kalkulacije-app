@@ -109,7 +109,7 @@ function calc(){
   const margin = selectedMargin;
 
   // Suggested price is always based on the active product section only.
-  const suggested = margin >= 100 ? 0 : purchase * (1 + margin / 100);
+  const suggested = purchase * (1 + margin / 100);
   const activeSale = productType === 'baterija'
     ? (readNumInput('sale_b') ?? suggested)
     : (readNumInput('sale') ?? suggested);
@@ -119,7 +119,7 @@ function calc(){
 
   // charger-specific suggested/sale/profit
   const marginCharger = +$('marginCharger_b')?.value || 0;
-  const suggestedCharger = marginCharger >= 100 ? 0 : purchaseCharger * (1 + marginCharger / 100);
+  const suggestedCharger = purchaseCharger * (1 + marginCharger / 100);
   const inputSaleChargerVal = readNumInput('saleCharger_b');
   const saleCharger = (inputSaleChargerVal != null) ? inputSaleChargerVal : suggestedCharger;
   const profitCharger = saleCharger - purchaseCharger;
@@ -211,7 +211,7 @@ function calc(){
   if ($('profitSet_b')) $('profitSet_b').textContent = euro(profitSet);
   if ($('actualMarginSet_b')) $('actualMarginSet_b').textContent = actualSet.toFixed(1)+'%';
 
-  return {factory,transport,batteryWeight,chargerWeight,chargerPrice,chargerTransport,customsCharger,customs,eco:ecoBattery,ecoCharger,purchase,purchaseCharger,purchaseWith,margin,suggested,sale,profit,actual,productType, suggestedCharger,saleCharger,profitCharger,actualCharger,purchaseSet,suggestedSet,saleSet,profitSet,actualSet};
+  return {factory,transport,batteryWeight,chargerWeight,chargerPrice,chargerTransport,customsCharger,customs,eco:ecoBattery,ecoCharger,purchase,purchaseCharger,purchaseWith,margin,marginCharger,suggested,sale,saleCharger,profit,actual,productType,suggestedCharger,profitCharger,actualCharger,purchaseSet,suggestedSet,saleSet,profitSet,actualSet};
 }
 // Attach input listeners to all relevant inputs so calc() runs when any value changes
   const inputSelector = '.money,#batteryWeight,#chargerWeight,#chargerPrice,#chargerTransport,#margin,#sale,#productType,#reExportType,#margin_b,#sale_b,#marginCharger_b,#saleCharger_b,#margin_v,#sale_v';
@@ -513,6 +513,10 @@ function loadCalculationIntoForm(item){
     if ($('other')) $('other').value = item.other ?? 0;
     if ($('margin')) $('margin').value = item.margin ?? 20;
     if ($('sale')) $('sale').value = item.sale ?? 0;
+    if ($('margin_b')) $('margin_b').value = item.margin ?? 20;
+    if ($('sale_b')) $('sale_b').value = item.sale ?? 0;
+    if ($('marginCharger_b')) $('marginCharger_b').value = item.marginCharger ?? 0;
+    if ($('saleCharger_b')) $('saleCharger_b').value = item.saleCharger ?? 0;
     if ($('saveBtn')) $('saveBtn').textContent='Ažuriraj kalkulaciju';
     if ($('backBtn')) $('backBtn').classList.remove('hidden');
     if ($('cancelEditBtn')) $('cancelEditBtn').classList.remove('hidden');
