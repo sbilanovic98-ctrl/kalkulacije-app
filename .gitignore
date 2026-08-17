@@ -1,0 +1,9 @@
+node_modules/
+calculations.db
+data/
+dist/
+ZA_SLANJE/
+*.exe
+*.blockmap
+*.yml
+.DS_Store

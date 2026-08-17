@@ -1,0 +1,47 @@
+{
+  "name": "kalkulacije-app",
+  "version": "1.0.1",
+  "engines": {
+    "node": "22.x"
+  },
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "node server.js",
+    "desktop": "electron .",
+    "electron-build": "electron-builder",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "sqlite3": "^6.0.1"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.tehnolift.kalkulacije",
+    "productName": "Kalkulacije Tehnolift",
+    "files": [
+      "**/*",
+      "!data/**",
+      "!dist/**",
+      "!build/**",
+      "!README*",
+      "!*.md",
+      "!*.txt"
+    ],
+    "directories": {
+      "buildResources": "build"
+    },
+    "win": {
+      "target": "nsis",
+      "artifactName": "Kalkulacije-Tehnolift-Setup-v${version}.exe"
+    }
+  }
+}

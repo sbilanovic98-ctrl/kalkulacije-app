@@ -1,0 +1,87 @@
+/* Responsive adjustments for mobile */
+
+/* General smaller paddings */
+@media (max-width: 900px) {
+  main { padding: 18px; }
+  .card { padding: 14px; }
+  header { gap: 8px; }
+}
+
+/* Collapse stats and make them single column */
+@media (max-width: 768px) {
+  /* Off-canvas sidebar: hide by default and animate in */
+  .sidebar { position:fixed; left:0; top:0; bottom:0; width:260px; transform:translateX(-110%); transition:transform .28s ease, box-shadow .28s ease; z-index:40; }
+  body.sidebar-open .sidebar { transform:translateX(0); box-shadow:4px 0 24px rgba(0,0,0,0.16); }
+  /* dark overlay behind sidebar */
+  body.sidebar-open::after { content:''; position:fixed; inset:0; background:rgba(0,0,0,0.36); z-index:30; }
+  main { padding: 12px; }
+  .stats { grid-template-columns: 1fr; }
+  .grid { display:block; }
+  .card { margin-bottom:12px; }
+  header{flex-direction:row;align-items:center}
+  .header-actions{display:flex;gap:8px;align-items:center}
+  .brand-logo span{font-size:22px}
+  .brand-logo small{display:none}
+  .mobile-menu{display:inline-flex}
+
+  /* Top compact navigation bar */
+  .top-nav{display:flex;gap:8px;justify-content:space-around;margin:10px 0 16px}
+  .top-nav .nav.top{flex:1;padding:8px 6px;border-radius:10px;background:#fff;border:1px solid #e6eef9;display:flex;flex-direction:column;align-items:center;color:#2f6fed;font-weight:700}
+  .top-nav .nav.top span{display:block;margin-top:6px;font-size:12px;font-weight:600}
+  .top-nav .nav.top:hover{background:#eef6ff}
+  .top-nav.hidden{display:none}
+
+  /* Mobile table: show rows as compact grid with key/value summary */
+  .table-wrap table thead{display:none}
+  .table-wrap table{width:100%;border-collapse:collapse}
+  .table-wrap tr{display:grid;grid-template-columns:1fr auto;gap:8px;padding:12px 0;border-bottom:1px solid #eef2f7;align-items:center}
+  .table-wrap td{display:block;padding:0}
+  /* emphasize first two columns */
+  .table-wrap td:nth-child(1){font-weight:700}
+  .table-wrap td:nth-child(2){font-size:15px}
+  /* hide detailed columns to keep rows short (hide Komercijalista and Marža) */
+  .table-wrap td:nth-child(4), .table-wrap td:nth-child(8){display:none}
+  .table-wrap td:last-child{text-align:right}
+}
+
+/* Small phones */
+@media (max-width:420px){
+  /* Reduce overall font to fit screen without zoom */
+  html,body{font-size:13px}
+  .primary{padding:8px 10px;font-size:13px}
+  h1{font-size:18px}
+  .brand-logo span{font-size:16px}
+  main{padding:8px}
+}
+
+/* Hide mobile menu by default on desktop */
+.mobile-menu{display:none;border:0;background:transparent;color:inherit;font-size:22px;padding:6px 8px;border-radius:6px}
+
+/* When sidebar is open, prevent body scroll */
+body.sidebar-open{overflow:hidden}
+
+/* History full-screen hero image */
+.history-hero{position:fixed;inset:0;background-image:url('history-hero.jpg');background-size:cover;background-position:center center;opacity:0.12;pointer-events:none;transition:opacity .28s ease;z-index:5}
+.history-hero.hidden{opacity:0;visibility:hidden}
+main{position:relative;z-index:10}
+.history-hero.visible{opacity:1;visibility:visible}
+
+/* Tweak result area readability */
+.card.result .result-row b { font-weight:700; color:#0b2336; }
+.card.result .highlight { background: linear-gradient(90deg,#fff7e6,#ffffff); border-radius:8px; padding:10px; margin:8px 0; display:flex; align-items:center; justify-content:space-between }
+.card.result .highlight strong { font-size:16px; color:#c0392b; }
+.card.result .result-row span { color:#51627a; }
+
+/* Battery / Charger section styling */
+.section { padding: 8px 0; }
+.section-divider { height: 3px; background: linear-gradient(90deg,#e6eef9,#cfe3ff); margin: 14px 0; border-radius:4px; box-shadow: inset 0 -1px 0 rgba(0,0,0,0.02); }
+.battery-section { border-left: 3px solid rgba(47,111,237,0.08); padding-left: 12px; }
+.charger-section { border-left: 3px solid rgba(0,160,120,0.06); padding-left: 12px; }
+
+/* Costs column separators */
+.cost-section { padding: 6px 0; }
+.cost-divider { height: 3px; background: linear-gradient(90deg,#f3f7fb,#e0f0ff); margin: 12px 0; border-radius:4px; }
+.battery-cost { border-left: 3px solid rgba(47,111,237,0.06); padding-left: 10px; }
+.charger-cost { border-left: 3px solid rgba(0,160,120,0.04); padding-left: 10px; }
+
+

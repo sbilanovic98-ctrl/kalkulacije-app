@@ -1,0 +1,9 @@
+app = "kalkulacije-app"
+primary_region = "waw"
+
+[env]
+  DATA_DIR = "/data"
+
+[[mounts]]
+  source = "data"
+  destination = "/data"
