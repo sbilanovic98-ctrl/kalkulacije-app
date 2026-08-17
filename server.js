@@ -69,7 +69,25 @@ const db = new sqlite3.Database(dbPath, (err) => {
         profit REAL,
         actual REAL,
         status TEXT,
-        createdAt TEXT
+        createdAt TEXT,
+        createdBy TEXT,
+        productType TEXT,
+        chargerWeight REAL,
+        chargerPrice REAL,
+        ecoCharger REAL,
+        customsCharger REAL,
+        purchaseCharger REAL,
+        marginCharger REAL,
+        saleCharger REAL,
+        profitCharger REAL,
+        actualCharger REAL,
+        purchaseSet REAL,
+        suggestedSet REAL,
+        saleSet REAL,
+        profitSet REAL,
+        actualSet REAL,
+        suggested REAL,
+        suggestedCharger REAL
       )
     `, (createErr) => {
       if (createErr) {
@@ -77,14 +95,45 @@ const db = new sqlite3.Database(dbPath, (err) => {
         process.exit(1);
       }
 
-      ensureColumn('calculations', 'createdBy', 'TEXT', (migrationErr) => {
-        if (migrationErr) {
-          console.error('Ne mogu da dodam createdBy kolonu:', migrationErr.message);
-          process.exit(1);
+      const migrationColumns = [
+        ['createdBy', 'TEXT'],
+        ['productType', 'TEXT'],
+        ['chargerWeight', 'REAL'],
+        ['chargerPrice', 'REAL'],
+        ['chargerTransport', 'REAL'],
+        ['ecoCharger', 'REAL'],
+        ['customsCharger', 'REAL'],
+        ['purchaseCharger', 'REAL'],
+        ['marginCharger', 'REAL'],
+        ['saleCharger', 'REAL'],
+        ['profitCharger', 'REAL'],
+        ['actualCharger', 'REAL'],
+        ['purchaseSet', 'REAL'],
+        ['suggestedSet', 'REAL'],
+        ['saleSet', 'REAL'],
+        ['profitSet', 'REAL'],
+        ['actualSet', 'REAL'],
+        ['suggested', 'REAL'],
+        ['suggestedCharger', 'REAL']
+      ];
+
+      const ensureNext = (index) => {
+        if (index >= migrationColumns.length) {
+          console.log('SQLite baza je spremna');
+          return;
         }
 
-        console.log('SQLite baza je spremna');
-      });
+        const [columnName, definition] = migrationColumns[index];
+        ensureColumn('calculations', columnName, definition, (migrationErr) => {
+          if (migrationErr) {
+            console.error(`Ne mogu da dodam ${columnName} kolonu:`, migrationErr.message);
+            process.exit(1);
+          }
+          ensureNext(index + 1);
+        });
+      };
+
+      ensureNext(0);
     });
   });
 });
@@ -113,15 +162,33 @@ function normalize(item = {}) {
     factory: Number(item.factory || 0),
     transport: Number(item.transport || 0),
     batteryWeight: Number(item.batteryWeight || 0),
+    chargerWeight: Number(item.chargerWeight || 0),
+    chargerPrice: Number(item.chargerPrice || 0),
+    chargerTransport: Number(item.chargerTransport || 0),
     other: Number(item.other || 0),
     eco: Number(item.eco || 0),
+    ecoCharger: Number(item.ecoCharger || 0),
     customs: Number(item.customs || 0),
+    customsCharger: Number(item.customsCharger || 0),
     purchase: Number(item.purchase || 0),
+    purchaseCharger: Number(item.purchaseCharger || 0),
+    purchaseSet: Number(item.purchaseSet || 0),
     margin: Number(item.margin || 0),
+    marginCharger: Number(item.marginCharger || 0),
     sale: Number(item.sale || 0),
+    saleCharger: Number(item.saleCharger || 0),
+    saleSet: Number(item.saleSet || 0),
     profit: Number(item.profit || 0),
+    profitCharger: Number(item.profitCharger || 0),
+    profitSet: Number(item.profitSet || 0),
     actual: Number(item.actual || 0),
+    actualCharger: Number(item.actualCharger || 0),
+    actualSet: Number(item.actualSet || 0),
+    suggested: Number(item.suggested || 0),
+    suggestedSet: Number(item.suggestedSet || 0),
+    suggestedCharger: Number(item.suggestedCharger || 0),
     createdBy: String(item.createdBy || '').trim(),
+    productType: String(item.productType || 'viljuskar').trim(),
   };
 }
 
@@ -190,8 +257,11 @@ app.post('/api/calculations', async (req, res) => {
       `INSERT INTO calculations (
         id, date, commercialist, model, customer, supplier, note,
         factory, transport, batteryWeight, other, eco, customs, purchase,
-        margin, sale, profit, actual, status, createdBy, createdAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        margin, sale, profit, actual, status, createdBy, createdAt,
+        productType, chargerWeight, chargerPrice, ecoCharger, customsCharger,
+        purchaseCharger, marginCharger, saleCharger, profitCharger, actualCharger,
+        purchaseSet, suggestedSet, saleSet, profitSet, actualSet, suggested, suggestedCharger
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         id,
@@ -215,6 +285,23 @@ app.post('/api/calculations', async (req, res) => {
         item.status || 'Aktivna',
         item.createdBy || '',
         createdAt,
+        item.productType || 'viljuskar',
+        item.chargerWeight,
+        item.chargerPrice,
+        item.ecoCharger,
+        item.customsCharger,
+        item.purchaseCharger,
+        item.marginCharger,
+        item.saleCharger,
+        item.profitCharger,
+        item.actualCharger,
+        item.purchaseSet,
+        item.suggestedSet,
+        item.saleSet,
+        item.profitSet,
+        item.actualSet,
+        item.suggested,
+        item.suggestedCharger,
       ]
     );
 
@@ -234,7 +321,10 @@ app.put('/api/calculations/:id', async (req, res) => {
       `UPDATE calculations SET
         date = ?, commercialist = ?, model = ?, customer = ?, supplier = ?, note = ?,
         factory = ?, transport = ?, batteryWeight = ?, other = ?, eco = ?, customs = ?, purchase = ?,
-        margin = ?, sale = ?, profit = ?, actual = ?, status = ?, createdBy = ?
+        margin = ?, sale = ?, profit = ?, actual = ?, status = ?, createdBy = ?,
+        productType = ?, chargerWeight = ?, chargerPrice = ?, ecoCharger = ?, customsCharger = ?,
+        purchaseCharger = ?, marginCharger = ?, saleCharger = ?, profitCharger = ?, actualCharger = ?,
+        purchaseSet = ?, suggestedSet = ?, saleSet = ?, profitSet = ?, actualSet = ?, suggested = ?, suggestedCharger = ?
       WHERE id = ?`,
       [
         item.date || '',
@@ -256,6 +346,23 @@ app.put('/api/calculations/:id', async (req, res) => {
         item.actual,
         item.status || 'Aktivna',
         item.createdBy || '',
+        item.productType || 'viljuskar',
+        item.chargerWeight,
+        item.chargerPrice,
+        item.ecoCharger,
+        item.customsCharger,
+        item.purchaseCharger,
+        item.marginCharger,
+        item.saleCharger,
+        item.profitCharger,
+        item.actualCharger,
+        item.purchaseSet,
+        item.suggestedSet,
+        item.saleSet,
+        item.profitSet,
+        item.actualSet,
+        item.suggested,
+        item.suggestedCharger,
         id,
       ]
     );

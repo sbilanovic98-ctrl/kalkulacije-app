@@ -65,3 +65,23 @@ body.sidebar-open{overflow:hidden}
 .history-hero.hidden{opacity:0;visibility:hidden}
 main{position:relative;z-index:10}
 .history-hero.visible{opacity:1;visibility:visible}
+
+/* Tweak result area readability */
+.card.result .result-row b { font-weight:700; color:#0b2336; }
+.card.result .highlight { background: linear-gradient(90deg,#fff7e6,#ffffff); border-radius:8px; padding:10px; margin:8px 0; display:flex; align-items:center; justify-content:space-between }
+.card.result .highlight strong { font-size:16px; color:#c0392b; }
+.card.result .result-row span { color:#51627a; }
+
+/* Battery / Charger section styling */
+.section { padding: 8px 0; }
+.section-divider { height: 3px; background: linear-gradient(90deg,#e6eef9,#cfe3ff); margin: 14px 0; border-radius:4px; box-shadow: inset 0 -1px 0 rgba(0,0,0,0.02); }
+.battery-section { border-left: 3px solid rgba(47,111,237,0.08); padding-left: 12px; }
+.charger-section { border-left: 3px solid rgba(0,160,120,0.06); padding-left: 12px; }
+
+/* Costs column separators */
+.cost-section { padding: 6px 0; }
+.cost-divider { height: 3px; background: linear-gradient(90deg,#f3f7fb,#e0f0ff); margin: 12px 0; border-radius:4px; }
+.battery-cost { border-left: 3px solid rgba(47,111,237,0.06); padding-left: 10px; }
+.charger-cost { border-left: 3px solid rgba(0,160,120,0.04); padding-left: 10px; }
+
+

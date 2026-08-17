@@ -6,6 +6,10 @@
   <title>Kalkulacija — V1</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="responsive.css">
+  <style>
+    /* small helper for emphasized labels */
+    .bold{font-weight:700}
+  </style>
 </head>
 <body>
   <div id="loginScreen" class="login-screen">
@@ -64,21 +68,22 @@
       <section id="dashboard" class="view">
         <div class="stats">
           <div class="stat"><span>Ukupno kalkulacija</span><strong id="statCount">0</strong></div>
-          <div class="stat"><span>Aktivne</span><strong id="statActive">0</strong></div>
           <div class="stat"><span>Ukupna prodajna vrednost</span><strong id="statSales">€0</strong></div>
           <div class="stat"><span>Prosečna marža</span><strong id="statMargin">0%</strong></div>
         </div>
         <div class="card">
           <div class="card-head"><h2>Poslednje kalkulacije</h2><button class="linkbtn" id="historyBtn">Prikaži sve</button></div>
-          <div class="table-wrap"><table><thead><tr><th>Broj</th><th>Model</th><th>Kupac</th><th>Komercijalista</th><th>Datum</th><th>Nabavna</th><th>Prodajna</th><th>Marža</th><th>Akcija</th></tr></thead><tbody id="recentBody"></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>Datum</th><th>Model</th><th>Kupac</th><th>Komercijalista</th><th>Cena baterije</th><th>Cena punjača</th><th>Cena set</th><th>Marža set</th><th>Akcija</th></tr></thead><tbody id="recentBody"></tbody></table></div>
         </div>
       </section>
 
       <section id="calculator" class="view hidden">
         <div class="grid">
+          <!-- Type selector removed for cleaner UI; use "Tip proizvoda" select instead -->
           <div class="card">
             <div class="card-head"><h2>Osnovni podaci</h2></div>
-            <label>Model<select id="model"><option value="">Izaberi model</option><option>EFL203</option><option>ES20-WA</option><option>CQD14-PRO</option><option>WSA161</option><option>EFLA251S</option></select></label>
+            <label>Model<input id="model" placeholder="Unesite model"></label>
+            <label>Tip proizvoda<select id="productType"><option value="viljuskar">Viljuškar</option><option value="baterija">Baterija</option></select></label>
             <label>Kupac<input id="customer" placeholder="Naziv kupca"></label>
             <label>Komercijalista<input id="commercialist" placeholder="Ime i prezime komercijaliste"></label>
             <label>Datum kalkulacije<input id="calcDate" type="date"></label>
@@ -87,21 +92,65 @@
           </div>
           <div class="card">
             <div class="card-head"><h2>Troškovi nabavke</h2></div>
-            <label>Cena iz fabrike (€)<input class="money" id="factory" type="number" min="0" placeholder="0"></label>
-            <label>Prevoz iz Kine (€)<input class="money" id="transport" type="number" min="0" placeholder="0"></label>
-            <label>Težina baterije (kg)<input id="batteryWeight" type="number" min="0" step="0.1" placeholder="0"></label>
-            <label>Eko taksa (€)<input class="money" id="eco" type="number" min="0" readonly placeholder="0"></label>
-            <label>Carina (€)<input class="money" id="customs" type="number" min="0" readonly placeholder="0"></label>
-            <label>Ostali troškovi (€)<input class="money" id="other" type="number" min="0" placeholder="0"></label>
+            <div class="cost-section battery-cost">
+              <label><span id="factoryLabel">Cena iz fabrike (€)</span><input class="money" id="factory" type="number" min="0" placeholder="0"></label>
+              <label>Prevoz iz Kine (€)<input class="money" id="transport" type="number" min="0" placeholder="0"></label>
+              <label>Težina baterije (kg)<input id="batteryWeight" type="number" min="0" step="0.1" placeholder="0"></label>
+              <label>Eko taksa baterije (€)<input class="money" id="eco" type="number" min="0" readonly placeholder="0"></label>
+              <label>Carina baterije (€)<input class="money" id="customs_b" type="number" min="0" readonly placeholder="0"></label>
+              <!-- 'Ostali troškovi' removed as requested -->
+            </div>
+
+            <div class="cost-divider" aria-hidden="true"></div>
+
+            <div class="cost-section charger-cost">
+              <label id="chargerPriceRow" class="hidden">Cena punjača (€)<input class="money" id="chargerPrice" type="number" min="0" step="0.01" placeholder="0"></label>
+              <label id="chargerTransportRow" class="hidden">Prevoz punjača (€)<input class="money" id="chargerTransport" type="number" min="0" placeholder="0"></label>
+              <label id="chargerRow" class="hidden">Težina punjača (kg)<input id="chargerWeight" type="number" min="0" step="0.1" placeholder="0"></label>
+              <label id="ecoChargerRow" class="hidden">Eko taksa punjača (€)<input class="money" id="ecoCharger" type="number" min="0" readonly placeholder="0"></label>
+              <label id="customsChargerRow" class="hidden">Carina punjača (€)<input class="money" id="customsCharger" type="number" min="0" readonly placeholder="0"></label>
+            </div>
           </div>
           <div class="card result">
             <div class="card-head"><h2>Rezultat</h2></div>
-            <div class="result-row"><span>Nabavna cena</span><b id="purchase">€0</b></div>
-            <label>Marža (%)<input id="margin" type="number" min="0" step="0.1" placeholder="0"></label>
-            <div class="result-row"><span>Predložena prodajna cena</span><b id="suggested">€0</b></div>
-            <label>Ponuđena cena (€)<input id="sale" type="number" min="0" placeholder="0"></label>
-            <div class="highlight"><span>RUC</span><strong id="profit">€0</strong></div>
-            <div class="result-row"><span>Ostvarena marža</span><b id="actualMargin">0%</b></div>
+
+            <div class="section forklift-section">
+             <div class="result-row"><span>Nabavna cena</span><b id="purchase">€0</b></div>
+             <label>Marža (%)<input id="margin" type="number" min="0" step="0.1" placeholder="0"></label>
+             <div class="result-row"><span>Predložena prodajna cena</span><b id="suggested">€0</b></div>
+             <label>Ponuđena cena (€)<input id="sale" type="number" min="0" placeholder="0"></label>
+             <div class="highlight"><span>RUC</span><strong id="profit">€0</strong></div>
+             <div class="result-row"><span>Ostvarena marža</span><b id="actualMargin">0%</b></div>
+            </div>
+
+            <div class="section battery-section hidden">
+             <div class="result-row"><span>Nabavna cena baterije</span><b id="purchase_b">€0</b></div>
+             <label>Marža baterije (%)<input id="margin_b" type="number" min="0" step="0.1" placeholder="0"></label>
+             <div class="result-row"><span>Predložena prodajna cena baterije</span><b id="suggested_b">€0</b></div>
+             <label>Ponuđena cena baterije (€)<input id="sale_b" type="number" min="0" placeholder="0"></label>
+             <div class="highlight"><span>RUC baterije</span><strong id="profit_b">€0</strong></div>
+             <div class="result-row"><span>Ostvarena marža baterije</span><b id="actualMargin_b">0%</b></div>
+            </div>
+
+            <div class="section-divider" aria-hidden="true"></div>
+
+            <div class="section charger-section hidden">
+             <div class="result-row"><span>Nabavna cena punjača</span><b id="purchaseCharger_b">€0</b></div>
+             <label>Marža punjača (%)<input id="marginCharger_b" type="number" min="0" step="0.1" placeholder="0"></label>
+             <div class="result-row"><span>Predložena cena punjača</span><b id="suggestedCharger_b">€0</b></div>
+             <label>Ponuđena cena punjača (€)<input id="saleCharger_b" type="number" min="0" placeholder="0"></label>
+             <div class="highlight"><span>RUC punjača</span><strong id="profitCharger_b">€0</strong></div>
+             <div class="result-row"><span>Ostvarena marža punjača</span><b id="actualMarginCharger_b">0%</b></div>
+            </div>
+
+            <div class="section-divider" aria-hidden="true"></div>
+             <div class="section set-section hidden">
+               <div class="result-row"><span>Nabavna cena seta (baterija + punjač)</span><b id="purchaseSet_b">€0</b></div>
+               <div class="result-row"><span>Predložena cena seta</span><b id="suggestedSet_b">€0</b></div>
+               <div class="result-row"><span>Ponuđena cena seta</span><b id="saleSet_b">€0</b></div>
+               <div class="highlight"><span>RUC seta</span><strong id="profitSet_b">€0</strong></div>
+               <div class="result-row"><span>Ostvarena marža seta</span><b id="actualMarginSet_b">0%</b></div>
+             </div>
             <div class="action-row">
               <button class="primary wide" id="saveBtn">Sačuvaj kalkulaciju</button>
               <button class="secondary wide hidden" id="backBtn">⬅ Nazad</button>

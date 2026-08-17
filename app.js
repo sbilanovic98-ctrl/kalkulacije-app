@@ -2,6 +2,20 @@ const $=id=>document.getElementById(id);
 const currentUserKey='tehnolift_current_user';
 let editingId=null;
 let currentUser=null;
+let productTypeLocked = false;
+
+function applyProductTypeLock(locked){
+  const productType = $('productType');
+  if (!productType) return;
+  productTypeLocked = !!locked;
+  productType.disabled = productTypeLocked;
+  if (productTypeLocked) {
+    productType.setAttribute('title', 'Tip proizvoda je zaključan za ovu kalkulaciju.');
+    if (productType.value !== 'baterija') productType.value = 'baterija';
+  } else {
+    productType.removeAttribute('title');
+  }
+}
 
 function todayISO(){
   const now=new Date();
@@ -42,30 +56,169 @@ async function saveCalculations(){
 }
 
 function euro(n){return new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(Number(n)||0)}
-function calc(){
- const factory=+$('factory').value||0;
- const transport=+$('transport').value||0;
- const batteryWeight=+$('batteryWeight').value||0;
- const other=+$('other').value||0;
- const subtotal=factory+transport+other;
- const customs=subtotal*0.05;
- const eco=batteryWeight*0.2;
- const purchase=subtotal+customs+eco;
- const margin=+$('margin').value||0;
- const suggested=margin>=100?0:purchase*(1+margin/100), sale=+$('sale').value||0, profit=sale-purchase, actual=purchase?profit/purchase*100:0;
- $('eco').value=eco.toFixed(2);
- $('customs').value=customs.toFixed(2);
- $('purchase').textContent=euro(purchase);$('suggested').textContent=euro(suggested);$('profit').textContent=euro(profit);$('actualMargin').textContent=actual.toFixed(1)+'%';
- return {factory,transport,batteryWeight,customs,eco,other,purchase,margin,suggested,sale,profit,actual};
+function syncResultSections(productType){
+  const forkliftSection = document.querySelector('.section.forklift-section');
+  const batterySection = document.querySelector('.section.battery-section');
+  const chargerSection = document.querySelector('.section.charger-section');
+  const setSection = document.querySelector('.section.set-section');
+  const isBattery = String(productType || 'viljuskar') === 'baterija';
+
+  if (forkliftSection) forkliftSection.classList.toggle('hidden', isBattery);
+  if (batterySection) batterySection.classList.toggle('hidden', !isBattery);
+  if (chargerSection) chargerSection.classList.toggle('hidden', !isBattery);
+  if (setSection) setSection.classList.toggle('hidden', !isBattery);
 }
-document.querySelectorAll('.money,#batteryWeight,#margin,#sale').forEach(x=>x.addEventListener('input',calc));
+function calc(){
+  const getVal = id => { const el = $(id); return el ? +el.value || 0 : 0; };
+  const readNumInput = id => { const el = $(id); if (!el) return null; const v = el.value; if (v === '' || v === null || typeof v === 'undefined') return null; return +v || 0; };
+  const factory=getVal('factory');
+  const transport=getVal('transport');
+  const batteryWeight=getVal('batteryWeight');
+  const chargerWeight=getVal('chargerWeight');
+  const chargerPrice=getVal('chargerPrice');
+  const chargerTransport=getVal('chargerTransport');
+  const productType = $('productType') ? $('productType').value : 'viljuskar';
+  const subtotal=factory+transport;
+  const customsRate = productType === 'baterija' ? 0.064 : 0.05;
+  const customs = subtotal * customsRate;
+  const ecoBattery = batteryWeight * 0.2;
+  const ecoCharger = chargerWeight * 0.6;
+  let purchase = subtotal + customs + ecoBattery;
+  // charger separate calculation
+  let customsCharger = 0;
+  let purchaseCharger = 0;
+  // only compute charger costs when product is battery
+  if (productType === 'baterija') {
+    const chargerBase = chargerPrice + chargerTransport;
+    customsCharger = chargerBase * 0.05; // 5% customs on charger price + transport
+    purchaseCharger = chargerBase + customsCharger + ecoCharger;
+  }
+  let purchaseWith = purchase + purchaseCharger;
+
+  const selectedMargin = productType === 'baterija'
+    ? (readNumInput('margin_b') ?? 0)
+    : (readNumInput('margin') ?? 0);
+  const margin = selectedMargin;
+
+  // Suggested price is always based on the active product section only.
+  const suggested = margin >= 100 ? 0 : purchase * (1 + margin / 100);
+  const activeSale = productType === 'baterija'
+    ? (readNumInput('sale_b') ?? suggested)
+    : (readNumInput('sale') ?? suggested);
+  const sale = activeSale;
+  const profit = sale - purchase;
+  const actual = purchase ? profit / purchase * 100 : 0;
+
+  // charger-specific suggested/sale/profit
+  const marginCharger = +$('marginCharger_b')?.value || 0;
+  const suggestedCharger = marginCharger >= 100 ? 0 : purchaseCharger * (1 + marginCharger / 100);
+  const inputSaleChargerVal = readNumInput('saleCharger_b');
+  const saleCharger = (inputSaleChargerVal != null) ? inputSaleChargerVal : suggestedCharger;
+  const profitCharger = saleCharger - purchaseCharger;
+  const actualCharger = purchaseCharger ? profitCharger / purchaseCharger * 100 : 0;
+
+  // update UI fields
+  // update factory label for battery/product type
+  const factoryLabel = $('factoryLabel');
+  if (factoryLabel) {
+    if (productType === 'baterija') {
+      factoryLabel.textContent = 'Cena baterije iz fabrike (€)';
+      factoryLabel.classList.add('bold');
+    } else {
+      factoryLabel.textContent = 'Cena iz fabrike (€)';
+      factoryLabel.classList.remove('bold');
+    }
+  }
+  // update UI fields for the active product type only, so hidden sections do not overwrite the visible result
+  const setIfText = (ids, val) => { for (const id of ids) { const el = $(id); if (el) { el.textContent = val; break; } } };
+  const setIfVal = (ids, val) => { for (const id of ids) { const el = $(id); if (el) { el.value = val; break; } } };
+
+  setIfVal(['eco_b','eco'], ecoBattery.toFixed(2));
+  if ($('ecoCharger')) $('ecoCharger').value = ecoCharger.toFixed(2);
+  setIfVal(['customs_b','customs'], customs.toFixed(2));
+
+  if (productType === 'baterija') {
+    if ($('purchase_b')) $('purchase_b').textContent = euro(purchase);
+    if ($('suggested_b')) $('suggested_b').textContent = euro(suggested);
+    if ($('profit_b')) $('profit_b').textContent = euro(profit);
+    if ($('actualMargin_b')) $('actualMargin_b').textContent = actual.toFixed(1) + '%';
+    if ($('purchaseWith_b')) $('purchaseWith_b').textContent = euro(purchaseWith);
+  } else {
+    if ($('purchase')) $('purchase').textContent = euro(purchase);
+    if ($('suggested')) $('suggested').textContent = euro(suggested);
+    if ($('profit')) $('profit').textContent = euro(profit);
+    if ($('actualMargin')) $('actualMargin').textContent = actual.toFixed(1) + '%';
+    if ($('purchaseWith')) $('purchaseWith').textContent = euro(purchaseWith);
+  }
+
+  // charger-specific UI
+  if ($('purchaseCharger_b')) $('purchaseCharger_b').textContent = euro(purchaseCharger);
+  // keep customs only in the procurement cost field; do not display it in the charger result summary
+  if ($('customsCharger')) $('customsCharger').value = customsCharger.toFixed(2);
+  // show battery customs in costs column (customs_b) if present
+  if ($('customs_b')) $('customs_b').value = customs.toFixed(2);
+  if ($('suggestedCharger_b')) $('suggestedCharger_b').textContent = euro(suggestedCharger);
+  if ($('profitCharger_b')) $('profitCharger_b').textContent = euro(profitCharger);
+  if ($('actualMarginCharger_b')) $('actualMarginCharger_b').textContent = actualCharger.toFixed(1)+'%';
+  // show charger price field value if present
+  if ($('chargerPrice')) $('chargerPrice').value = chargerPrice ? chargerPrice : $('chargerPrice').value;
+
+  // show/hide charger rows depending on product type
+  const chargerRow = $('chargerRow');
+  const ecoChargerRow = $('ecoChargerRow');
+  const chargerPriceRow = $('chargerPriceRow');
+  const chargerTransportRow = $('chargerTransportRow');
+  const customsChargerRow = $('customsChargerRow');
+  const purchaseWithRow = $('purchaseWithRow');
+  syncResultSections(productType);
+
+  if (productType === 'baterija') {
+    if (chargerRow) chargerRow.classList.remove('hidden');
+    if (ecoChargerRow) ecoChargerRow.classList.remove('hidden');
+    if (chargerPriceRow) chargerPriceRow.classList.remove('hidden');
+    if (chargerTransportRow) chargerTransportRow.classList.remove('hidden');
+    if (customsChargerRow) customsChargerRow.classList.remove('hidden');
+    if (purchaseWithRow) purchaseWithRow.style.display = '';
+  } else {
+    if (chargerRow) chargerRow.classList.add('hidden');
+    if (ecoChargerRow) ecoChargerRow.classList.add('hidden');
+    if (chargerPriceRow) chargerPriceRow.classList.add('hidden');
+    if (chargerTransportRow) chargerTransportRow.classList.add('hidden');
+    if (customsChargerRow) customsChargerRow.classList.add('hidden');
+    if (purchaseWithRow) purchaseWithRow.style.display = 'none';
+  }
+
+  // set totals
+  const purchaseSet = purchase + purchaseCharger;
+  const suggestedSet = suggested + suggestedCharger;
+  const saleSet = productType === 'baterija'
+    ? ((readNumInput('sale_b') ?? suggested) + (readNumInput('saleCharger_b') ?? suggestedCharger))
+    : sale;
+  const profitSet = saleSet - purchaseSet;
+  const actualSet = purchaseSet ? profitSet / purchaseSet * 100 : 0;
+
+  if ($('purchaseSet_b')) $('purchaseSet_b').textContent = euro(purchaseSet);
+  if ($('suggestedSet_b')) $('suggestedSet_b').textContent = euro(suggestedSet);
+  if ($('saleSet_b')) $('saleSet_b').textContent = euro(saleSet);
+  if ($('profitSet_b')) $('profitSet_b').textContent = euro(profitSet);
+  if ($('actualMarginSet_b')) $('actualMarginSet_b').textContent = actualSet.toFixed(1)+'%';
+
+  return {factory,transport,batteryWeight,chargerWeight,chargerPrice,chargerTransport,customsCharger,customs,eco:ecoBattery,ecoCharger,purchase,purchaseCharger,purchaseWith,margin,suggested,sale,profit,actual,productType, suggestedCharger,saleCharger,profitCharger,actualCharger,purchaseSet,suggestedSet,saleSet,profitSet,actualSet};
+}
+// Attach input listeners to all relevant inputs so calc() runs when any value changes
+  const inputSelector = '.money,#batteryWeight,#chargerWeight,#chargerPrice,#chargerTransport,#margin,#sale,#productType,#margin_b,#sale_b,#marginCharger_b,#saleCharger_b,#margin_v,#sale_v';
+document.querySelectorAll(inputSelector).forEach(el=>{
+  if (!el) return;
+  el.addEventListener('input', calc);
+  el.addEventListener('change', calc);
+});
 
 function render(){
  $('statCount').textContent=calculations.length;
- $('statActive').textContent=calculations.filter(x=>x.status==='Aktivna').length;
+ if ($('statActive')) $('statActive').textContent = calculations.filter(x=>x.status==='Aktivna').length;
  $('statSales').textContent=euro(calculations.reduce((s,x)=>s+x.sale,0));
  $('statMargin').textContent=(calculations.length?calculations.reduce((s,x)=>s+x.actual,0)/calculations.length:0).toFixed(1)+'%';
- const rows=calculations.slice(-8).reverse().map(x=>`<tr><td>#${x.id}</td><td><b>${x.model}</b></td><td>${x.customer||'—'}</td><td>${x.commercialist||'—'}</td><td>${formatDate(x.date)}</td><td>${euro(x.purchase)}</td><td>${euro(x.sale)}</td><td>${x.actual.toFixed(1)}%</td><td><button class="edit-btn" data-id="${x.id}">Uredi</button> <button class="print-btn" data-id="${x.id}">Štampaj</button> <button class="delete-btn" data-id="${x.id}">Obriši</button></td></tr>`).join('');
+ const rows=calculations.slice(-8).reverse().map(x=>`<tr><td>${formatDate(x.date)}</td><td><b>${x.model || '—'}</b></td><td>${x.customer||'—'}</td><td>${x.commercialist||'—'}</td><td>${euro(x.purchase ?? 0)}</td><td>${euro(x.purchaseCharger ?? 0)}</td><td>${euro(x.purchaseSet ?? x.purchaseWith ?? x.purchase ?? 0)}</td><td>${((x.actualSet ?? x.actual ?? 0)).toFixed(1)}%</td><td><button class="edit-btn" data-id="${x.id}">Uredi</button> <button class="print-btn" data-id="${x.id}">Štampaj</button> <button class="delete-btn" data-id="${x.id}">Obriši</button></td></tr>`).join('');
  $('recentBody').innerHTML=rows||'<tr><td colspan="9">Još nema sačuvanih kalkulacija.</td></tr>';
  const all=calculations.slice().reverse().map(x=>`<tr><td>#${x.id}</td><td>${formatDate(x.date)}</td><td><b>${x.model}</b></td><td>${x.customer||'—'}</td><td>${x.commercialist||'—'}</td><td>${euro(x.purchase)}</td><td>${euro(x.sale)}</td><td>${euro(x.profit)}</td><td>${x.actual.toFixed(1)}%</td><td><button class="edit-btn" data-id="${x.id}">Uredi</button> <button class="print-btn" data-id="${x.id}">Štampaj</button> <button class="delete-btn" data-id="${x.id}">Obriši</button></td></tr>`).join('');
  $('historyBody').innerHTML=all||'<tr><td colspan="10">Nema podataka.</td></tr>';
@@ -135,18 +288,47 @@ function printCalculation(id){
   }, 300);
 }
 function resetCalculatorForm(){
-  $('model').value='';
-  $('customer').value='';
-  $('commercialist').value=currentUser ? currentUser.username : '';
-  $('calcDate').value='';
-  $('supplier').value='';
-  $('note').value='';
-  $('factory').value='';
-  $('transport').value='';
-  $('batteryWeight').value='';
-  $('other').value='';
-  $('margin').value='';
-  $('sale').value='';
+  productTypeLocked = false;
+  applyProductTypeLock(false);
+  const productType = $('productType');
+  if (productType) {
+    productType.disabled = false;
+    productType.removeAttribute('title');
+    productType.value = 'viljuskar';
+  }
+  const setIf = (id, val='') => { const el = $(id); if (el) el.value = val; };
+  setIf('model','');
+  setIf('model_b','');
+  setIf('customer','');
+  setIf('customer_b','');
+  // Leave `commercialist` empty for manual input (do not prefill with current user)
+  setIf('commercialist','');
+  setIf('commercialist_b','');
+  setIf('calcDate','');
+  setIf('calcDate_b','');
+  setIf('supplier','');
+  setIf('supplier_b','');
+  setIf('note','');
+  setIf('note_b','');
+  setIf('factory','');
+  setIf('factory_b','');
+  setIf('transport','');
+  setIf('transport_b','');
+  setIf('batteryWeight','');
+  setIf('batteryWeight_b','');
+  setIf('chargerWeight','');
+  setIf('chargerWeight_b','');
+  setIf('chargerPrice','');
+  setIf('chargerTransport','');
+  setIf('other','');
+  setIf('other_b','');
+  if ($('productType')) $('productType').value='viljuskar';
+  syncResultSections('viljuskar');
+  // margins and sales per section
+  setIf('margin',''); setIf('sale','');
+  setIf('margin_v',''); setIf('sale_v','');
+  setIf('margin_b',''); setIf('sale_b','');
+  setIf('marginCharger_b',''); setIf('saleCharger_b','');
   editingId=null;
   $('saveBtn').textContent='Sačuvaj kalkulaciju';
   $('backBtn').classList.add('hidden');
@@ -155,24 +337,40 @@ function resetCalculatorForm(){
 }
 function loadCalculationIntoForm(item){
   if (!item) return;
-  editingId=item.id;
-  $('model').value=item.model||'EFL203';
-  $('customer').value=item.customer||'';
-  $('commercialist').value=item.commercialist||'';
-  $('calcDate').value=item.date || todayISO();
-  $('supplier').value=item.supplier||'EP Equipment';
-  $('note').value=item.note||'';
-  $('factory').value=item.factory ?? 0;
-  $('transport').value=item.transport ?? 0;
-  $('batteryWeight').value=item.batteryWeight ?? 0;
-  $('other').value=item.other ?? 0;
-  $('margin').value=item.margin ?? 20;
-  $('sale').value=item.sale ?? 0;
-  $('saveBtn').textContent='Ažuriraj kalkulaciju';
-  $('backBtn').classList.remove('hidden');
-  $('cancelEditBtn').classList.remove('hidden');
-  calc();
-  show('calculator');
+  try {
+    editingId = item.id;
+    const isBatteryCalculation = String(item.productType || 'viljuskar') === 'baterija';
+    productTypeLocked = isBatteryCalculation;
+    if ($('productType')) {
+      $('productType').value = String(item.productType || 'viljuskar');
+      applyProductTypeLock(productTypeLocked);
+    }
+    if ($('model')) $('model').value = item.model || '';
+    if ($('customer')) $('customer').value = item.customer || '';
+    if ($('commercialist')) $('commercialist').value = item.commercialist || '';
+    if ($('calcDate')) $('calcDate').value = item.date || todayISO();
+    if ($('supplier')) $('supplier').value = item.supplier || 'EP Equipment';
+    if ($('note')) $('note').value = item.note || '';
+    if ($('factory')) $('factory').value = item.factory ?? 0;
+    if ($('transport')) $('transport').value = item.transport ?? 0;
+    if ($('batteryWeight')) $('batteryWeight').value = item.batteryWeight ?? 0;
+    if ($('chargerWeight')) $('chargerWeight').value = item.chargerWeight ?? 0;
+    if ($('productType')) $('productType').value = item.productType || 'viljuskar';
+    if ($('chargerPrice')) $('chargerPrice').value = item.chargerPrice ?? 0;
+    if ($('chargerTransport')) $('chargerTransport').value = item.chargerTransport ?? 0;
+    if ($('other')) $('other').value = item.other ?? 0;
+    if ($('margin')) $('margin').value = item.margin ?? 20;
+    if ($('sale')) $('sale').value = item.sale ?? 0;
+    if ($('saveBtn')) $('saveBtn').textContent='Ažuriraj kalkulaciju';
+    if ($('backBtn')) $('backBtn').classList.remove('hidden');
+    if ($('cancelEditBtn')) $('cancelEditBtn').classList.remove('hidden');
+    calc();
+    show('calculator');
+  } catch (err) {
+    console.error('loadCalculationIntoForm failed:', err);
+    // still try to show calculator so user can inspect
+    try { show('calculator'); } catch(e){}
+  }
 }
 $('saveBtn').onclick=async ()=>{
  const c=calc();
@@ -360,6 +558,31 @@ if (savedUser && $('loginScreen') && $('appShell')) {
   $('loginScreen').classList.remove('hidden');
   $('appShell').classList.add('hidden');
   resetCalculatorForm();
+}
+// productType select controls behavior; calc() will show/hide charger rows based on its value
+if ($('productType')) {
+  const updateModelPlaceholder = () => {
+    const modelInput = $('model');
+    if (modelInput) modelInput.placeholder = 'Unesite model';
+  };
+  $('productType').addEventListener('change', () => {
+    const productType = $('productType');
+    if (productTypeLocked && productType.value !== 'baterija') {
+      productType.value = 'baterija';
+      applyProductTypeLock(true);
+      updateModelPlaceholder();
+      calc();
+      return;
+    }
+
+    // New calculations may switch modes freely; battery lock is only for editing existing battery records.
+    productTypeLocked = false;
+    applyProductTypeLock(false);
+    syncResultSections(productType.value);
+    updateModelPlaceholder();
+    calc();
+  });
+  updateModelPlaceholder();
 }
 
 // Mobile sidebar toggle
